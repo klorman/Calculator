@@ -1,4 +1,5 @@
 import Debug.Trace
+import Control.Applicative ((<$>), (<*>))
 
 type Operator = Double -> Double -> Double
 type Entry = (String, Operator)
@@ -42,7 +43,7 @@ parenthesis _ [""] = error "ERROR: incorrect placement of parentheses"
 parenthesis ((operator, function):rest) unparsed =
     case span (/= operator) unparsed of
         (_, []) -> parenthesis rest unparsed
-      --  ([""], _) -> []   
+        --([""], _) -> []   
         (left, right)
             | operator == "(" -> parenthesis operatorRegister (left ++ parenthesis operatorRegister (tail right))
             | operator == ")" -> ([show (evaluate operatorRegister left)]) ++ (drop 2 right)
@@ -55,7 +56,7 @@ evaluate :: Register -> [String] -> Double
 evaluate _ [number] = read number
 evaluate ((operator, function):rest) unparsed =
     case span (/= operator) unparsed of
-        (_, []) -> evaluate rest unparsed
+        (_, []) -> trace (show unparsed) evaluate rest unparsed
         (left, right)
             | operator == "(" -> evaluate operatorRegister (left ++ (parenthesis operatorRegister $ tail right))
             | otherwise -> function (evaluate operatorRegister left) (evaluate operatorRegister $ tail right)
