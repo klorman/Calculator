@@ -4,8 +4,8 @@ type Register = [Entry]
 
 operatorRegister :: Register
 operatorRegister = [
-        ("(", undefined),
         (")", undefined),
+        ("(", undefined),
         ("+", (+)),
         ("-", (-)),
         ("*", (*)),
@@ -36,42 +36,50 @@ isNumber str =
         [(_, "")] -> True
         _         -> False
 
+addToTuple :: ([String], [String]) -> String -> Bool -> ([String], [String])
+addToTuple (left, right) elem pos
+    | pos       = (left, right ++ [elem])
+    | otherwise = (elem : left, right)
+
+mySpan :: (String -> Bool) -> [String] -> ([String], [String])
+mySpan _ [] = ([], [])
+mySpan predic lst = if predic $ last lst
+    then addToTuple (mySpan predic $ init lst) (last lst) True
+    else (lst, [])
+
 parenthesis :: Register -> [String] -> [String]
 parenthesis _ [""] = error "ERROR: Invalid parenthesis placement!"
 parenthesis [] _   = error "ERROR: Invalid parenthesis placement!"
 parenthesis ((operator, function):rest) unparsed =
-    case span (/= operator) unparsed of
-        (_, []) -> parenthesis rest unparsed
+    case mySpan (/= operator) unparsed of
+        ([], _) -> parenthesis rest unparsed
         (left, right)
-            | operator == "(" -> parenthesis operatorRegister (left ++ (parenthesis operatorRegister $ tail right))
-            | operator == ")" -> ([show (evaluate operatorRegister False left)]) ++ (tail right)
+            | operator == ")" -> parenthesis operatorRegister ((parenthesis operatorRegister $ init left) ++ right)
+            | operator == "(" -> (init left) ++ [show (evaluate operatorRegister right)]
             | otherwise -> error "ERROR: Invalid parenthesis placement!"
 
-calculate :: String -> String
-calculate str = show (evaluate operatorRegister False $ numbers str False)
+calculate :: String -> Double
+calculate str = evaluate operatorRegister $ numbers str False
 
-evaluate :: Register -> Bool -> [String] -> Double
-evaluate _ _ [] = error "ERROR: Invalid syntax!"
-evaluate _ _ [left, right]
-    | left == "+" =   evaluate operatorRegister False [right]
-    | left == "-" = - evaluate operatorRegister False [right]
+evaluate :: Register -> [String] -> Double
+evaluate _ [] = error "ERROR: Invalid syntax!"
+evaluate _ [left, right]
+    | left == "+" =   evaluate operatorRegister [right]
+    | left == "-" = - evaluate operatorRegister [right]
     | left == "(" || left == ")" || right == "(" || right == ")" = error "ERROR: Invalid parenthesis placement!"
     | left == "*" || left == "/" || left  == "^"                 = error "ERROR: Invalid use of the operator!"
     | otherwise = error "ERROR: Invalid value!"
 
-evaluate _ _ [number]
+evaluate _ [number]
     | isNumber number = read number
     | otherwise = error "ERROR: Invalid value!"
 
-evaluate ((operator, function):rest) sign unparsed =
-    case span (/= operator) unparsed of
-        (_, []) -> evaluate rest sign unparsed
+evaluate ((operator, function):rest) unparsed =
+    case mySpan (/= operator) unparsed of
+        ([], _) -> evaluate rest unparsed
         (left, right)
-            | operator == "(" -> evaluate operatorRegister False (left ++ (parenthesis (take 2 operatorRegister) $ tail right))
-            | operator == "-" -> if sign 
-                then (+) (evaluate operatorRegister True left) (evaluate operatorRegister True $ tail right) 
-                else (-) (evaluate operatorRegister True left) (evaluate operatorRegister True $ tail right)      
-            | otherwise -> function (evaluate operatorRegister False left) (evaluate operatorRegister False $ tail right)
+            | operator == ")" -> evaluate operatorRegister ((parenthesis (take 2 operatorRegister) $ init left) ++ right)    
+            | otherwise -> function (evaluate operatorRegister $ init left) (evaluate operatorRegister right)
 
 main :: IO()
-main = interact (unlines . (map calculate) . lines)
+main = interact $ unlines . (map (show . calculate)) . lines
