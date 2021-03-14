@@ -38,6 +38,7 @@ isNumber str =
 
 parenthesis :: Register -> [String] -> [String]
 parenthesis _ [""] = error "ERROR: Invalid parenthesis placement!"
+parenthesis [] _   = error "ERROR: Invalid parenthesis placement!"
 parenthesis ((operator, function):rest) unparsed =
     case span (/= operator) unparsed of
         (_, []) -> parenthesis rest unparsed
@@ -50,6 +51,7 @@ calculate :: String -> String
 calculate str = show ( evaluate operatorRegister False $ numbers str False)
 
 evaluate :: Register -> Bool -> [String] -> Double
+evaluate _ _ [] = error "ERROR: Invalid syntax!"
 evaluate _ _ [left, right]
     | left == "+" =   evaluate operatorRegister False [right]
     | left == "-" = - evaluate operatorRegister False [right]
@@ -65,7 +67,7 @@ evaluate ((operator, function):rest) sign unparsed =
     case span (/= operator) unparsed of
         (_, []) -> evaluate rest sign unparsed
         (left, right)
-            | operator == "(" -> evaluate operatorRegister False (left ++ (parenthesis operatorRegister $ tail right))
+            | operator == "(" -> evaluate operatorRegister False (left ++ (parenthesis (take 2 operatorRegister) $ tail right))
             | operator == "-" -> if sign 
                 then (+) (evaluate operatorRegister True left) (evaluate operatorRegister True $ tail right) 
                 else (-) (evaluate operatorRegister True left) (evaluate operatorRegister True $ tail right)      
