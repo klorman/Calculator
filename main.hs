@@ -17,7 +17,7 @@ numbers :: String -> Bool -> [String]
 numbers [] True  = [""]
 numbers [] False = []
 numbers (x:xs) prev
-        | x == ' ' = if prev then "" : rest else rest
+        | x == ' ' = if prev then "" :       rest else       rest
         | x == '+' = if prev then "" : "+" : rest else "+" : rest
         | x == '-' = if prev then "" : "-" : rest else "-" : rest
         | x == '*' = if prev then "" : "*" : rest else "*" : rest
@@ -48,7 +48,7 @@ parenthesis ((operator, function):rest) unparsed =
             | otherwise -> error "ERROR: Invalid parenthesis placement!"
 
 calculate :: String -> String
-calculate str = show ( evaluate operatorRegister False $ numbers str False)
+calculate str = show (evaluate operatorRegister False $ numbers str False)
 
 evaluate :: Register -> Bool -> [String] -> Double
 evaluate _ _ [] = error "ERROR: Invalid syntax!"
@@ -56,7 +56,7 @@ evaluate _ _ [left, right]
     | left == "+" =   evaluate operatorRegister False [right]
     | left == "-" = - evaluate operatorRegister False [right]
     | left == "(" || left == ")" || right == "(" || right == ")" = error "ERROR: Invalid parenthesis placement!"
-    | left == "*" || left == "/" || left == "^" = error "ERROR: Invalid use of the operator!"
+    | left == "*" || left == "/" || left  == "^"                 = error "ERROR: Invalid use of the operator!"
     | otherwise = error "ERROR: Invalid value!"
 
 evaluate _ _ [number]
