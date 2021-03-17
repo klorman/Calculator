@@ -4,8 +4,8 @@ type Register = [Entry]
 
 operatorRegister :: Register
 operatorRegister = [
-        (")", undefined),
-        ("(", undefined),
+        (")", error "ERROR: Invalid parenthesis placement!"),
+        ("(", error "ERROR: Invalid parenthesis placement!"),
         ("+", (+)),
         ("-", (-)),
         ("*", (*)),
@@ -36,19 +36,15 @@ isNumber str =
         [(_, "")] -> True
         _         -> False
 
-addToTuple :: ([String], [String]) -> String -> Bool -> ([String], [String])
-addToTuple (left, right) elem pos
-    | pos       = (left, right ++ [elem])
-    | otherwise = (elem : left, right)
-
 mySpan :: (String -> Bool) -> [String] -> ([String], [String])
 mySpan _ [] = ([], [])
 mySpan predic lst = if predic $ last lst
-    then addToTuple (mySpan predic $ init lst) (last lst) True
+    then (left, right ++ [last lst])
     else (lst, [])
+    where(left, right) = mySpan predic $ init lst
 
 parenthesis :: Register -> [String] -> [String]
-parenthesis _ [""] = error "ERROR: Invalid parenthesis placement!"
+--parenthesis _ [""] = error "ERROR: Invalid parenthesis placement!"
 parenthesis [] _   = error "ERROR: Invalid parenthesis placement!"
 parenthesis ((operator, function):rest) unparsed =
     case mySpan (/= operator) unparsed of
